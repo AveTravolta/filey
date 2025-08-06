@@ -1,4 +1,5 @@
 import os
+from posixpath import abspath
 import secrets
 import argparse
 import json
@@ -183,20 +184,40 @@ class MainHandler(BaseHandler):
             self.write("Forbidden")
             return
 
+
         if os.path.isdir(abspath):
             files = get_files_in_directory(abspath)
             parent_path = os.path.dirname(path) if path else None
-            
+            #handle the search query
+            search_query = self.get_argument('search', None)
+            if search_query:
+                files = [f for f in files if search_query.lower() in f['name'].lower()]
+
+            sort_key = self.get_argument('sort', 'name')  #default to sorting by name
+            sort_order = self.get_argument('order', 'asc')  #default to ascending order
+            reverse = sort_order == 'desc'
+
+            if sort_key == 'name':
+                files.sort(key=lambda f: f['name'].lower(), reverse=reverse)
+            elif sort_key == 'size':
+                files.sort(key=lambda f: f.get('size_bytes', 0), reverse=reverse)
+            elif sort_key == 'modified':
+                files.sort(key=lambda f: f.get('modified_timestamp', 0), reverse=reverse)
+
             # Use the new helper function to get the correct relative path
             self.render(
                 "browse.html", 
                 current_path=path, 
                 parent_path=parent_path, 
-                files=files, 
+                files=files,
+                #render the search query
+                search_query=search_query,
                 join_path=join_path, 
                 get_file_icon=get_file_icon,
                 features=FEATURE_FLAGS
             )
+
+            
         elif os.path.isfile(abspath):
             filename = os.path.basename(abspath)
             if self.get_argument('download', None):

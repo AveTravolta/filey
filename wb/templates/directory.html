@@ -50,6 +50,23 @@
         text-decoration: underline;
       }
 
+      form {
+        margin-bottom: 20px;
+      }
+
+      input[type="text"] {
+        padding: 6px;
+        width: 300px;
+        font-family: monospace;
+        border: 1px solid #ccc;
+      }
+
+      input[type="submit"] {
+        padding: 6px 12px;
+        font-family: monospace;
+        cursor: pointer;
+      }
+
       .file-table {
         width: 100%;
         border-collapse: collapse;
@@ -78,7 +95,7 @@
       .name-col {
         width: 100%;
       }
-      
+
       .file-link {
         color: black;
         text-decoration: none;
@@ -92,7 +109,6 @@
       .file-icon {
         margin-right: 8px;
       }
-
     </style>
   </head>
   <body>
@@ -101,8 +117,27 @@
         <h1>Filey - All Directories</h1>
         <div class="breadcrumb">
           <a href="/">🏠 Home</a>
+          {% if path and path != "" %}
+            &nbsp;&raquo;&nbsp;
+            {% set parts = path.split('/') %}
+            {% for i in range(parts|length) %}
+              {% set part_path = "/".join(parts[:i+1]) %}
+              <a href="{{ escape(part_path) }}">{{ escape(parts[i]) }}</a>{% if not loop.last %} / {% end %}
+            {% end %}
+          {% end %}
         </div>
       </div>
+
+      <!-- Search Form -->
+      <form method="GET" action="/">
+        <input
+          type="text"
+          name="search"
+          placeholder="Search files and directories"
+          value="{{ escape(search_query or '') }}"
+        />
+        <input type="submit" value="Search" />
+      </form>
 
       <!-- Directory Listing Table -->
       <table class="file-table" id="fileTable">
@@ -112,28 +147,25 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Directory Listings -->
-          {% for dir in dirs %}
+          <!-- Directory and File Listings -->
+          {% for file in files %}
           <tr class="file-row">
             <td class="name-cell">
-              <a
-                href="{{ escape(dir.path) }}"
-                class="file-link"
-              >
-                <span class="file-icon">📁</span>{{ escape(dir.name) }}
+              <a href="{{ escape(path + '/' + file['name']) }}" class="file-link">
+                <span class="file-icon">
+                  {% if file['is_dir'] %}📁{% else %}📄{% end %}
+                </span>
+                {{ escape(file['name']) }}
               </a>
             </td>
           </tr>
           {% end %}
 
           <!-- Empty Directory Message -->
-          {% if not dirs %}
+          {% if not files %}
           <tr>
-            <td
-              colspan="1"
-              style="text-align: center; padding: 40px; color: #666"
-            >
-              📭 No directories found.
+            <td colspan="1" style="text-align: center; padding: 40px; color: #666">
+              📭 No files or directories found.
             </td>
           </tr>
           {% end %}

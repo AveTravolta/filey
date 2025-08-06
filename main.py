@@ -4,9 +4,8 @@ import argparse
 import json
 from typing import TYPE_CHECKING
  
- if TYPE_CHECKING:
-     from typing import Optional
-
+if TYPE_CHECKING:
+    from typing import Optional   
 import tornado.ioloop
 import tornado.web
 import socket
@@ -31,7 +30,7 @@ class LoginHandler(BaseHandler):
         if self.current_user:
             self.redirect("/")
             return
-        self.render("login.html", error=None)  # Always provide 'error'
+        self.render("login.html", error=None, settings=self.application.settings)
 
     def post(self):
         token = self.get_argument("token", "")
@@ -39,7 +38,7 @@ class LoginHandler(BaseHandler):
             self.set_secure_cookie("user", "authenticated")
             self.redirect("/")
         else:
-            self.render("login.html", error="Invalid token. Try again.")
+            self.render("login.html", error="Invalid token. Try again.", settings=self.application.settings)
 
 class MainHandler(BaseHandler):
     @tornado.web.authenticated
@@ -53,13 +52,16 @@ class MainHandler(BaseHandler):
         if os.path.isdir(realpath):
             files = os.listdir(realpath)
             files.sort()
+            search = self.get_argument("search", "").lower()
             file_data = []
             for f_name in files:
+                if search and search not in f_name.lower():
+                    continue  # skip if no match
                 file_data.append({
                     'name': f_name,
                     'is_dir': os.path.isdir(os.path.join(realpath, f_name))
                 })
-            self.render("directory.html", path=path, files=file_data)
+            self.render("directory.html", path=path, files=file_data, search_query=search)
         elif os.path.isfile(realpath):
             filename = os.path.basename(realpath)
             if self.get_argument('download', None):
@@ -223,7 +225,7 @@ class RenameHandler(BaseHandler):
 
 def make_app(settings):
     # Add template_path to settings
-    settings["template_path"] = os.path.join(os.path.dirname(__file__), "templates")
+    settings["template_path"] = os.path.join(os.path.dirname(__file__), "wb", "templates")
     return tornado.web.Application([
         (r"/login", LoginHandler),
         (r"/stream/(.*)", FileStreamHandler),

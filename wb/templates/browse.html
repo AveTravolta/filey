@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Browse</title>
-    <style>
+    <style>    
       * {
         margin: 0;
         padding: 0;
@@ -193,14 +193,36 @@
       <div class="header">
         <h1>Filey</h1>
         <div class="breadcrumb">
-          <a href="/">🏠 Home</a>
-          {% if current_user and current_path != "/" %} {% set path_parts = current_path.strip('/').split('/') %}
-          {% for i, part in enumerate(path_parts) %} 
+      <a href="/">🏠 Home</a>
+      {% if current_user and current_path != "/" %}
+        {% set path_parts = current_path.strip('/').split('/') %}
+        {% for i, part in enumerate(path_parts) %}
           {% set partial_path = '/' + '/'.join(path_parts[:i+1]) %} /
           <a href="{{ partial_path }}">{{ part }}</a>
-          {% end %} {% end %}
-        </div>
-      </div>
+        {% end %}
+      {% end %}
+    </div>
+
+<!--search form-->
+    <form method="get" style="margin: 10px 0;">
+  <input 
+    type="text" 
+    name="search" 
+    placeholder="🔍 Search files..." 
+    value="{{ request.arguments.search[0].decode() if request.arguments.get('search') else '' }}"
+    style="padding: 5px; width: 200px; font-family: monospace;" 
+  />
+  <select name="sort" style="font-family: monospace; padding: 5px;">
+    <option value="name" {% if request.arguments.get('sort', ['name'])[0] == 'name' %}selected{% endif %}>Sort by Name</option>
+    <option value="size" {% if request.arguments.get('sort', [''])[0] == 'size' %}selected{% endif %}>Sort by Size</option>
+    <option value="modified" {% if request.arguments.get('sort', [''])[0] == 'modified' %}selected{% endif %}>Sort by Modified</option>
+  </select>
+  <select name="order" style="font-family: monospace; padding: 5px;">
+    <option value="asc" {% if request.arguments.get('order', ['asc'])[0] == 'asc' %}selected{% endif %}>Ascending</option>
+    <option value="desc" {% if request.arguments.get('order', [''])[0] == 'desc' %}selected{% endif %}>Descending</option>
+  </select>
+  <button type="submit">Search</button>
+</form>
 
       <!-- Upload Zone -->
       {% if features['file_upload'] %}
